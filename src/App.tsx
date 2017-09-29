@@ -1,11 +1,18 @@
 import * as React from 'react';
-import * as update from 'immutability-helper';
+import axios from 'axios';
 import './App.css';
 
-class App extends React.Component<
-  {},
-  { todos: Array<{ title: string; resolved: boolean }> }
-> {
+interface Todo {
+  id: string;
+  title: string;
+  resolved: boolean;
+}
+
+class App extends React.Component<{}, { todos: Array<Todo> }> {
+  private titleInput: HTMLInputElement;
+
+  private apiUrl: string = 'http://localhost:3001';
+
   constructor() {
     super();
 
@@ -14,27 +21,32 @@ class App extends React.Component<
     };
   }
 
-  private titleInput: HTMLInputElement;
+  componentDidMount() {
+    axios.get(this.apiUrl + '/get-todos').then(res => {
+      this.setState({ todos: res.data });
+    });
+  }
 
   addTodo(title: string) {
     const todo = {
       title,
       resolved: false,
     };
-    this.setState({ todos: [todo, ...this.state.todos] });
-  }
 
-  removeToDo(index: number) {
-    this.setState({
-      todos: update(this.state.todos, { $splice: [[index, 1]] }),
+    axios.post(this.apiUrl + '/add-todo', todo).then(res => {
+      this.setState({ todos: res.data });
     });
   }
 
-  doneToDo(index: number) {
-    this.setState({
-      todos: update(this.state.todos, {
-        [index]: { resolved: { $set: true } },
-      }),
+  removeToDo(id: string) {
+    axios.delete(this.apiUrl + '/remove-todo/' + id).then(res => {
+      this.setState({ todos: res.data });
+    });
+  }
+
+  doneToDo(id: string) {
+    axios.put(this.apiUrl + '/resolve-todo/' + id).then(res => {
+      this.setState({ todos: res.data });
     });
   }
 
@@ -68,9 +80,9 @@ class App extends React.Component<
                 }}
               >
                 {!todo.resolved && (
-                  <button onClick={() => this.doneToDo(index)}>Done</button>
+                  <button onClick={() => this.doneToDo(todo.id)}>Done</button>
                 )}
-                <button onClick={() => this.removeToDo(index)}>
+                <button onClick={() => this.removeToDo(todo.id)}>
                   Delete
                 </button>{' '}
                 {todo.title}
