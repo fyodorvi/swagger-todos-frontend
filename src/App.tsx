@@ -1,17 +1,11 @@
 import * as React from 'react';
-import axios from 'axios';
+import TodoApi, { Todo } from './generated-api';
 import './App.css';
 
-interface Todo {
-  id: string;
-  title: string;
-  resolved: boolean;
-}
+const todoApi = new TodoApi('http://localhost:3001');
 
 class App extends React.Component<{}, { todos: Array<Todo> }> {
   private titleInput: HTMLInputElement;
-
-  private apiUrl: string = 'http://localhost:3001';
 
   constructor() {
     super();
@@ -21,33 +15,30 @@ class App extends React.Component<{}, { todos: Array<Todo> }> {
     };
   }
 
-  componentDidMount() {
-    axios.get(this.apiUrl + '/get-todos').then(res => {
-      this.setState({ todos: res.data });
-    });
+  async componentDidMount() {
+    const todos = await todoApi.getTodos({});
+    this.setState({ todos });
   }
 
-  addTodo(title: string) {
-    const todo = {
+  async addTodo(title: string) {
+    const todo: Todo = {
+      id: '',
       title,
       resolved: false,
     };
 
-    axios.post(this.apiUrl + '/add-todo', todo).then(res => {
-      this.setState({ todos: res.data });
-    });
+    const todos = await todoApi.addTodo({ body: todo });
+    this.setState({ todos });
   }
 
-  removeToDo(id: string) {
-    axios.delete(this.apiUrl + '/remove-todo/' + id).then(res => {
-      this.setState({ todos: res.data });
-    });
+  async removeToDo(id: string) {
+    const todos = await todoApi.removeTodo({ id });
+    this.setState({ todos });
   }
 
-  doneToDo(id: string) {
-    axios.put(this.apiUrl + '/resolve-todo/' + id).then(res => {
-      this.setState({ todos: res.data });
-    });
+  async doneToDo(id: string) {
+    const todos = await todoApi.resolveTodo({ id });
+    this.setState({ todos });
   }
 
   render() {
